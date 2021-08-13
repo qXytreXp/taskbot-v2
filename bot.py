@@ -56,7 +56,7 @@ def generate_level_for_task(task: dict) -> str:
 
 
 async def send_task_to_channell(interval: int) -> None:
-    for task_id in range(get_last_task_id(PATH_TO_LAST_ID)+1, 753):
+    for task_id in range(get_last_task_id(PATH_TO_LAST_ID), 753):
         task = get_task_from_json(PATH_TO_TASKS, task_id)
 
         title = task['title']
@@ -90,7 +90,7 @@ async def send_task_to_channell(interval: int) -> None:
                 parse_mode='html'
             )
 
-        write_last_task_id(PATH_TO_LAST_ID, task_id)
+        write_last_task_id(PATH_TO_LAST_ID+1, task_id)
         await asyncio.sleep(interval)
 
 
