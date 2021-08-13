@@ -90,7 +90,7 @@ async def send_task_to_channell(interval: int) -> None:
                 parse_mode='html'
             )
 
-        write_last_task_id(PATH_TO_LAST_ID+1, task_id)
+        write_last_task_id(PATH_TO_LAST_ID, task_id+1)
         await asyncio.sleep(interval)
 
 
