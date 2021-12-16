@@ -7,8 +7,10 @@ from config import (
     INTERVAL, 
     TOKEN, 
     PATH_TO_TASKS, 
-    PATH_TO_LAST_ID
+    LAST_TASK_ID_ENV_VAR_NAME
 )
+from os import environ
+
 from aiogram import Dispatcher, Bot, executor
 from aiogram.utils.exceptions import CantParseEntities
 
@@ -19,33 +21,29 @@ bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
 
     
-def write_last_task_id(path_to_file: str, task_id) -> None:
-    with open(path_to_file, 'w') as f:
-        f.write(str(task_id))
-        f.truncate()
+def save_last_task_number(task_id: int) -> None:
+    """ Save last task number to enviroment variable """
+    environ[LAST_TASK_ID_ENV_VAR_NAME] = str(task_id)
+    print(environ[LAST_TASK_ID_ENV_VAR_NAME])
 
 
-def get_last_task_id(path_to_file):
-    with open(path_to_file, 'r') as f:
-        id_ = f.read()
-    if id_:
-        return int(id_) if int(id_) != 0 else 1
-    else:
-        write_last_task_id(PATH_TO_LAST_ID, 1)
-        return 1
+def get_last_task_id() -> int:
+    """ Get last task id from enviroment variable """
+    try:
+        return int(environ[LAST_TASK_ID_ENV_VAR_NAME])
+    except KeyError:
+        return 0
 
 
-def get_task_from_json(path_to_file: str, task_id: int) -> int:
-    with open(path_to_file, 'r') as f:
+def get_task_from_json(task_id: int) -> dict:
+    with open(PATH_TO_TASKS, 'r') as f:
         data = json.loads(f.read())
     task = data[task_id+1]
 
     return task
 
 
-def generate_level_for_task(task: dict) -> str:
-    task_id = int(task['id'])
-
+def generate_level_for_task(task_id: int) -> str:
     if task_id <= 200:
         level = '😃'
     elif task_id <= 400:
@@ -55,13 +53,14 @@ def generate_level_for_task(task: dict) -> str:
     return level
 
 
-async def send_task_to_channell(interval: int) -> None:
-    for task_id in range(get_last_task_id(PATH_TO_LAST_ID), 753):
-        task = get_task_from_json(PATH_TO_TASKS, task_id)
+async def send_task_to_channel(interval: int) -> None:
+    for task_id in range(get_last_task_id(), 753):
+        task_id += 1
+        task = get_task_from_json(task_id)
 
         title = task['title']
         url = task['url']
-        level = generate_level_for_task(task)
+        level = generate_level_for_task(task_id)
         text = task['text']
 
         message = f'**Task number {task_id}**\n'\
@@ -90,12 +89,12 @@ async def send_task_to_channell(interval: int) -> None:
                 parse_mode='html'
             )
 
-        write_last_task_id(PATH_TO_LAST_ID, task_id+1)
+        save_last_task_number(task_id)
         await asyncio.sleep(interval)
 
 
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
-    loop.create_task(send_task_to_channell(INTERVAL))
+    loop.create_task(send_task_to_channel(INTERVAL))
 
-    executor.start_polling(dp, skip_updates=True)
+    executor.start_polling(dp)
