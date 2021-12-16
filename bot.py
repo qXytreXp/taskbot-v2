@@ -24,21 +24,19 @@ dp = Dispatcher(bot)
 def save_last_task_number(task_id: int) -> None:
     """ Save last task number to enviroment variable """
     environ[LAST_TASK_ID_ENV_VAR_NAME] = str(task_id)
-    print(environ[LAST_TASK_ID_ENV_VAR_NAME])
 
 
 def get_last_task_id() -> int:
     """ Get last task id from enviroment variable """
-    try:
+    if LAST_TASK_ID_ENV_VAR_NAME in environ:
         return int(environ[LAST_TASK_ID_ENV_VAR_NAME])
-    except KeyError:
-        return 0
+    return 0
 
 
 def get_task_from_json(task_id: int) -> dict:
     with open(PATH_TO_TASKS, 'r') as f:
         data = json.loads(f.read())
-    task = data[task_id+1]
+    task = data[task_id-1]
 
     return task
 
